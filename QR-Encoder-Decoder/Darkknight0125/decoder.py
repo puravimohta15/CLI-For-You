@@ -1,59 +1,88 @@
 import base64
-import sys
-from pathlib import Path
-import qrcode
-from PIL import Image
 from pyzbar.pyzbar import decode
+from PIL import Image
 
-def decode_qr(input_image_path, output_file_name, is_binary_format):
+# Function to check if a string is base64 encoded
+def is_base64_encoded(data):
     try:
-        # Open the QR code image
-        qr_image = Image.open(input_image_path)
+        if isinstance(data, str):
+            data = data.encode('utf-8')  # Convert string to bytes
+        return data == base64.b64encode(base64.b64decode(data, validate=True))
+    except Exception:
+        return False
 
-        # Decode the QR code
-        decoded_data = decode(qr_image)
-        if not decoded_data:
-            print("No QR code found in the image.")
-            return
+def bin_to_bytes(bin_str):
+    bin_str = ''.join(bin_str.split())
+    if not all(c in '01' for c in bin_str):
+        raise ValueError("Invalid binary string")
+    return bytes(int(bin_str[i:i+8], 2) for i in range(0, len(bin_str), 8))
 
-        # Extract data from the first detected QR code
-        qr_data = decoded_data[0].data.decode('utf-8')
+def process_data(input_data, bin_mode):
+    try:
+        ascii_text = input_data.decode('ascii')
+        # Check if the ASCII text represents a binary string
+        if all(char in '01 \n' for char in ascii_text): 
+            return bin_to_bytes(ascii_text)
+    except UnicodeDecodeError:
+        pass
 
-        # Check if the data is base64 encoded
+    # Check if the input data is base64 encoded
+    if is_base64_encoded(input_data):
         try:
-            base64_decoded = base64.b64decode(qr_data)
-            if base64.b64encode(base64_decoded).decode('utf-8') == qr_data:
-                is_base64 = True
-            else:
-                is_base64 = False
-        except Exception:
-            is_base64 = False
+            decoded_data = base64.b64decode(input_data)
+            decoded_text = decoded_data.decode('ascii')
+            if all(char in '01 \n' for char in decoded_text):
+                return bin_to_bytes(decoded_text)
+            return decoded_data
+        except (UnicodeDecodeError, ValueError):
+            pass
 
-        # If the data is base64, decode it
-        if is_base64:
-            file_data = base64.b64decode(qr_data)
-        else:
-            file_data = qr_data
+    return input_data
 
-        # Write the decoded data to the output file
-        output_path = Path(output_file_name)
-        write_mode = 'wb' if is_binary_format else 'w'
 
-        with open(output_path, write_mode) as output_file:
-            if is_binary_format:
-                output_file.write(file_data)
-            else:
-                output_file.write(file_data if isinstance(file_data, str) else file_data.decode('utf-8'))
-
-        print(f"Decoded data has been written to {output_file_name}")
-
+# Function to decode a QR code using pyzbar
+def decode_qr(image_path):
+    try:
+        image = Image.open(image_path)
+        decoded_objects = decode(image)
+        if decoded_objects:
+            return decoded_objects[0].data
+        return None
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Error decoding QR code: {e}")
+        return None
+
+# Function to write the data to a file
+def write_to_file(output_filename, data, binary_mode):
+    mode = 'wb' if binary_mode else 'w'
+    with open(output_filename, mode) as file:
+        if binary_mode:
+            file.write(data)
+        else:
+            file.write(data.decode('utf-8'))
+
+# Main program
+def main():
+    # Input details
+    image_path = input("Enter the path to the image containing the QR code: ")
+    output_filename = input("Enter the output file name with extension: ")
+    binary_mode = input("Is the data binary? (yes/no): ").strip().lower() == 'yes'
+
+    # Decode the QR code
+    print("Decoding QR code...")
+    qr_data = decode_qr(image_path)
+    
+    if not qr_data:
+        print("Failed to decode QR code or no data found.")
+        return
+
+    decoded_data = process_data(qr_data, binary_mode)
+
+    # Write the data to the specified file
+    print("Writing data to output file...")
+    write_to_file(output_filename, decoded_data, binary_mode)
+
+    print(f"File saved as {output_filename}.")
 
 if __name__ == "__main__":
-    # Example usage:
-    input_image_path = input("Enter the path to the image containing the QR code: ")
-    output_file_name = input("Enter the output file name with extension: ")
-    is_binary_format = input("Is the data binary (yes/no): ").strip().lower() == 'yes'
-
-    decode_qr(input_image_path, output_file_name, is_binary_format)
+    main()
