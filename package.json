@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "play-sound": "^1.1.6",
+    "sound-play": "^1.1.0"
+  }
+}
