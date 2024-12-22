@@ -159,6 +159,8 @@ let enemy = {
   ],
 };
 
-startCombat(player, enemy);
-
+// Exported for use in other parts of the game
 export default startCombat;
+export { player, enemy }; // Export the player and enemy objects for customization
+
+
