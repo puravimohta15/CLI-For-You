@@ -1,0 +1,7 @@
+python3 decoder.py -i <qr.png> -o <output.extension> -b -v 
+
+Flags:
+-i : Input
+-o : Output
+-b : Binary
+-v : Verbose logging
