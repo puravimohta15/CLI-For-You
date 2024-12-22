@@ -1,0 +1,19 @@
+{
+  "name": "official-ashutosh",
+  "version": "1.0.0",
+  "description": "- Cross-platform compatibility (Windows, macOS, Linux).\r - No extra dependencies.\r - Simple and intuitive API.\r - Actively maintained.",
+  "main": "sound-player.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "official-ashutosh": "file:",
+    "play-sound": "^1.1.6",
+    "sound-play": "^1.1.0",
+    "speaker": "^0.5.5",
+    "wav": "^1.0.2"
+  }
+}
